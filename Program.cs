@@ -1,9 +1,11 @@
-﻿namespace Hemsida;
-
-class Program
+namespace Hemsida
 {
-    static void Main(string[] args)
+    internal class Program
     {
-        Console.WriteLine("Hello, World!");
+        static void Main(string[] args)
+        {
+            Console.WriteLine("This template project is created by Benjamin Österlund");
+            Console.WriteLine("Git repository is initialized and .gitignore file is added");
+        }
     }
 }
