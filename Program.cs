@@ -72,6 +72,8 @@ namespace Hemsida
 
             }
 
+
+            //Kanske ändra denna metoden vid insert
             public void MainTag()
             {
                 Console.WriteLine("Du har valt att lägga till en Main tag, denna tag kan bara anges en gång");
