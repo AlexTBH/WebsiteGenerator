@@ -1,6 +1,9 @@
 using System.ComponentModel.Design;
+using System.Diagnostics;
+using System.Net.Http;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Hemsida
 {
@@ -13,34 +16,42 @@ namespace Hemsida
             string title  = Console.ReadLine();
 
             Console.WriteLine("Vill du ha en stylad HeadTag?\nY/N\n");
-
+            string htmlContent = "";
             string styledHead = Console.ReadLine();
             if (styledHead.ToUpper() == "Y")
             {
+
                 Console.WriteLine("Ange färg som du vill ha för bakgrunden");
                 string color = Console.ReadLine();
                 StyledWebSiteGenerator styledWebsite = new StyledWebSiteGenerator(title, color);
                 styledWebsite.AddTags();
                 styledWebsite.AddTags();
                 styledWebsite.AddTags();
-                styledWebsite.DisplayWebsite();
+                htmlContent = styledWebsite.GetHtml();
+                
             }
             else
             {
                 WebSiteGenerator website = new WebSiteGenerator(title);
-                website.DisplayWebsite();
+                website.GetHtml();
                 website.AddTags();
                 website.AddTags();
                 website.AddTags();
-                website.DisplayWebsite();
+                htmlContent = website.GetHtml();
             }
+
+            HtmlUtilities.DisplayHtmlInBrowser(title, htmlContent, true);
 
         }
     }
 
-    class WebSiteGenerator
+    public interface IHtmlPage
     {
-        private bool Maintag = false;
+        public string GetHtml();
+    }
+    class WebSiteGenerator : IHtmlPage
+    {
+        private bool _maintag = false;
         public string Title;
 
         protected List<string> list = new List<string>
@@ -59,15 +70,13 @@ namespace Hemsida
 
         protected virtual void PrintHead()
         {
-            list[2] = $"<head>\n{Title}\n</head>";
+            list.Insert(1, $"<head>\n{Title}\n</head>");
         }
 
 
         // Använd en list istället för att behålla värden
         public void InsertAtIndex(string input)
         {
-            if (list.Count > 5)
-            {
 
                 Console.WriteLine("Vart vill du placera taggen?");
                 Console.WriteLine("Du får inte placera det innan första body taggen och efter sista body taggen\n");
@@ -82,10 +91,10 @@ namespace Hemsida
 
                 while (true) {
 
-                    Console.WriteLine($"ange en position mellan 3 till {list.Count - 2}");
-                    val = Convert.ToInt32(Console.ReadLine());
+                    Console.WriteLine($"ange en position mellan 4 till {list.Count - 2}");
+                    val = Convert.ToInt32(Console.ReadLine()) -1;
 
-                    if (val >= 2 && val <= (list.Count - 2))
+                    if (val >= 2 && val <= (list.Count - 1))
                     {
                         break;
                     } 
@@ -95,31 +104,27 @@ namespace Hemsida
                     }
                 }
 
-                list.Insert(val, input);
-            } 
-            else
-            {
-                list.Insert(3, input);
-            }
+                list.Insert(val +1, input);
 
         }
 
 
-        //Kanske ändra denna metoden vid insert
+        
         public void MainTag()
         {
             Console.WriteLine("Du har valt att lägga till en Main tag, denna tag kan bara anges en gång");
             
-            if (Maintag == true)
+            if (_maintag)
             {
                 Console.WriteLine("Det finns redan en main tag");
             } else
             {
                 InsertAtIndex("<main>");
                 InsertAtIndex("</main>");
+                _maintag = true;
             }
 
-            Maintag = true;
+            
         }
 
         public void AddTags()
@@ -133,7 +138,7 @@ namespace Hemsida
             {
                 input = Convert.ToInt32(Console.ReadLine());
 
-                if (input < 0 && input > 3)
+                if (input < 1 || input > 3)
                 {
                     Console.WriteLine("Ange ett giltigt input mellan 1-3");
                 }
@@ -181,15 +186,46 @@ namespace Hemsida
             InsertAtIndex(text);
         }
 
-        public void DisplayWebsite()
+        public string GetHtml()
         {
             PrintHead();
+            StringBuilder htmlBuilder = new StringBuilder();
+
             foreach (string text in list)
             {
-                Console.WriteLine(text);
+                htmlBuilder.AppendLine(text);
+
             }
+
+            return htmlBuilder.ToString();
         }
 
+    }
+
+    public static class HtmlUtilities
+    {
+        /// <summary>
+        /// Save html content to a temporary file and open it in a browser
+        /// </summary>
+        /// <param name="pageTitle">Page-title is used as filename</param>
+        /// <param name="htmlContent">Sets the html for the file that is to be display</param>
+        /// <param name="openFile">Opens the file in browser. True is default</param>
+        /// <param name="webbrowserName">Chrome is default but can be set to any webbrowser. Don't include .exe in the name<
+        public static void DisplayHtmlInBrowser(string pageTitle, string htmlContent, bool openFile = true, string webbrowserName = "chrome")
+        {
+            pageTitle = pageTitle.Replace(" ", "_");
+            var tempPath = System.IO.Path.GetTempPath();
+            string htmlFile = Path.Combine(tempPath, $"{pageTitle}.html");
+            File.WriteAllText(htmlFile, htmlContent);
+            if (openFile)
+            {
+                Process process = new Process();
+                process.StartInfo.UseShellExecute = true;
+                process.StartInfo.FileName = webbrowserName;
+                process.StartInfo.Arguments = @$"file:///{htmlFile}";
+                process.Start();
+            }
+        }
     }
 
     class StyledWebSiteGenerator : WebSiteGenerator
@@ -204,7 +240,7 @@ namespace Hemsida
 
         protected override void PrintHead()
         {
-            list[2] = $"<head>\n<style>\np {{ color: {Color}; }}\n</style>\n</head>";
+            list.Insert(1, $"<head>\n<style>\nbody {{ background-color: {Color}; }}\n</style>\n</head>");
         }
     }
 }
