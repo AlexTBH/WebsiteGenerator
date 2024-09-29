@@ -12,6 +12,7 @@ namespace Hemsida
         static void Main(string[] args)
         {
 
+
             Console.WriteLine("Skriv in titeln för din hemsida");
             string title  = Console.ReadLine();
 
@@ -36,11 +37,20 @@ namespace Hemsida
                 website.GetHtml();
                 website.AddTags();
                 website.AddTags();
-                website.AddTags();
                 htmlContent = website.GetHtml();
             }
 
-            HtmlUtilities.DisplayHtmlInBrowser(title, htmlContent, true);
+            try
+            {
+                WebSiteGenerator.WriteToFile(htmlContent);
+            }
+            catch (Exception e) 
+            {
+                Console.WriteLine(e);
+            }
+
+            //HtmlUtilities.DisplayHtmlInBrowser(title, htmlContent, true);
+
 
         }
     }
@@ -49,6 +59,8 @@ namespace Hemsida
     {
         public string GetHtml();
     }
+
+
     class WebSiteGenerator : IHtmlPage
     {
         private bool _maintag = false;
@@ -200,6 +212,14 @@ namespace Hemsida
             return htmlBuilder.ToString();
         }
 
+        static public void WriteToFile(string htmlText)
+        {   
+            using (StreamWriter sw = new StreamWriter("Hemsida.txt"))
+            {
+                sw.WriteLine(htmlText);
+            }
+        }
+
     }
 
     public static class HtmlUtilities
@@ -227,6 +247,8 @@ namespace Hemsida
             }
         }
     }
+
+
 
     class StyledWebSiteGenerator : WebSiteGenerator
     {
